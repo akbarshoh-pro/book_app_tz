@@ -16,7 +16,11 @@ interface MainContract {
         val message: String = ""
     )
 
-    sealed interface SideEffect
+    sealed interface SideEffect {
+        data class OpenDetail(
+            val data: BookData
+        ) : SideEffect
+    }
 
     sealed interface Intent {
         data object LoadAllBooks : Intent

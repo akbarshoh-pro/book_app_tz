@@ -24,6 +24,10 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,30 +40,44 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.hilt.getViewModel
 import coil.compose.rememberImagePainter
 import com.example.book_app_tz.R
 import com.example.book_app_tz.data.model.BookData
 import com.example.book_app_tz.presentation.main.MainContract
+import com.example.book_app_tz.presentation.main.MainViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
 
-class DetailsScreen(
-    private val book: BookData
-) : Screen {
-    @Composable
-    override fun Content() {
-        val viewModel: DetailsContract.ViewModel = getViewModel<DetailsViewModel>()
-        val systemUiController = rememberSystemUiController()
-        systemUiController.setSystemBarsColor(color = Color.Transparent)
-        DetailsScreenContent(book = book, uiState = viewModel.collectAsState(), onEventDispatcher = viewModel::onEventDispatcher)
-    }
+@Composable
+fun DetailsScreen(navController: NavController, index: Int) {
+
+    val viewModel: DetailsViewModel = hiltViewModel()
+    viewModel.onEventDispatcher(DetailsContract.Intent.LoadDada(index))
+
+    DetailsScreenContent(navController = navController, viewModel = viewModel)
 }
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun DetailsScreenContent(book: BookData, uiState: State<DetailsContract.UIState>, onEventDispatcher: (DetailsContract.Intent) -> Unit) {
+fun DetailsScreenContent(navController: NavController, viewModel: DetailsContract.ViewModel) {
+    val uiState by viewModel.collectAsState()
+    val book = uiState.data
+    val systemUiController = rememberSystemUiController()
+    systemUiController.setSystemBarsColor(color = Color(0xFFE43C22))
+
+    viewModel.collectSideEffect { sideEffect ->
+        when(sideEffect) {
+            is DetailsContract.SideEffect.BackMain -> {
+                navController.popBackStack()
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -94,7 +112,7 @@ fun DetailsScreenContent(book: BookData, uiState: State<DetailsContract.UIState>
                                 .size(48.dp)
                                 .clip(shape = RoundedCornerShape(100))
                                 .background(Color(0xFFFFFFFF))
-                                .clickable { onEventDispatcher(DetailsContract.Intent.BackMain) },
+                                .clickable { viewModel.onEventDispatcher(DetailsContract.Intent.BackMain) },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(

@@ -2,6 +2,8 @@ package com.example.book_app_tz.presentation.main
 
 //noinspection UsingMaterialAndMaterial3Libraries
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.hilt.getViewModel
 import coil.compose.rememberImagePainter
@@ -46,36 +51,54 @@ import com.example.book_app_tz.R
 import com.example.book_app_tz.data.model.BookData
 import com.example.book_app_tz.utils.ScreenStatus
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.gson.Gson
+import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
+import javax.inject.Inject
 
-class MainScreen : Screen {
-    @SuppressLint("RememberReturnType")
-    @Composable
-    override fun Content() {
-        val viewModel: MainContract.ViewModel = getViewModel<MainViewModel>()
-        viewModel.onEventDispatcher(MainContract.Intent.LoadAllBooks)
-        MainScreenContent(uiState = viewModel.collectAsState(), onEventDispatcher = viewModel::onEventDispatcher)
-        val systemUiController = rememberSystemUiController()
-        systemUiController.setSystemBarsColor(color = Color.White)
-    }
+@Composable
+fun MainScreen(navController: NavController) {
+    val systemUiController = rememberSystemUiController()
+    systemUiController.setSystemBarsColor(color = Color.White)
+
+    val viewModel: MainViewModel = hiltViewModel()
+    viewModel.onEventDispatcher(MainContract.Intent.LoadAllBooks)
+
+    MainScreenContent(navController, viewModel)
 }
 
 @Composable
-fun MainScreenContent(uiState: State<MainContract.UIState>, onEventDispatcher: (MainContract.Intent) -> Unit) {
+fun MainScreenContent(navController: NavController, viewModel: MainContract.ViewModel) {
     var time by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val uiState by viewModel.collectAsState()
+    viewModel.collectSideEffect { sideEffect ->
+        when(sideEffect) {
+            is MainContract.SideEffect.OpenDetail -> {
+                val list = uiState.books
+                var index = 0
+                repeat(list.size) { i ->
+                    if(sideEffect.data.bookId == list[i].bookId){
+                        index = i
+                    }
+                }
+                navController.navigate(com.example.book_app_tz.navigation.Screen.DetailsScreen.route + "/" + "${index}")
+            }
+        }
+    }
 
-    when(uiState.value.screenStatus) {
+    when(uiState.screenStatus) {
         ScreenStatus.INITIAL -> {
 
         }
         ScreenStatus.LOADING -> LoadingState()
-        ScreenStatus.SUCCESS -> SuccessState(books = uiState.value.books, itemClick = {
+        ScreenStatus.SUCCESS -> SuccessState(books = uiState.books, itemClick = {
             if (System.currentTimeMillis() - time > 1000) {
-                onEventDispatcher(MainContract.Intent.OpenDetail(it))
+                viewModel.onEventDispatcher(MainContract.Intent.OpenDetail(it))
                 time = System.currentTimeMillis()
             }
         })
-        ScreenStatus.FAILURE -> FailureState(message = uiState.value.message)
+        ScreenStatus.FAILURE -> FailureState(message = uiState.message)
     }
 }
 

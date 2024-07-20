@@ -9,11 +9,16 @@ interface DetailsContract {
         fun onEventDispatcher(intent: Intent)
     }
 
-    class UIState
+    data class UIState(
+        val data: BookData
+    )
 
-    sealed interface SideEffect
+    sealed interface SideEffect {
+        data object BackMain : SideEffect
+    }
 
     sealed interface Intent {
+        data class LoadDada(val index: Int) : Intent
         data object BackMain : Intent
     }
 }

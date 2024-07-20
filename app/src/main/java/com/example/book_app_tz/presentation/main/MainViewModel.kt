@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
@@ -15,7 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repo: AppRepository,
-    private val directions: MainDirections
 ) : ViewModel(), MainContract.ViewModel {
     override val container = container<MainContract.UIState, MainContract.SideEffect>(
         MainContract.UIState()
@@ -36,7 +36,7 @@ class MainViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             }
             is MainContract.Intent.OpenDetail -> {
-                directions.openDetails(intent.data)
+                postSideEffect(MainContract.SideEffect.OpenDetail(intent.data))
             }
         }
     }

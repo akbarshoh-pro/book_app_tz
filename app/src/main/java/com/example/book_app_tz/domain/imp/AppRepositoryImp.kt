@@ -33,4 +33,8 @@ class AppRepositoryImp @Inject constructor(
             emit(Result.success(list))
         }
     }
+
+    override fun getBook(index: Int): BookData =
+        list[index];
+
 }
