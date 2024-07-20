@@ -68,7 +68,7 @@ fun DetailsScreenContent(navController: NavController, viewModel: DetailsContrac
     val uiState by viewModel.collectAsState()
     val book = uiState.data
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(color = Color(0xFFE43C22))
+    systemUiController.setSystemBarsColor(color = Color.White)
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
